@@ -51,6 +51,8 @@ class ChipsInput<T> extends StatefulWidget {
     this.autofocus = false,
     this.allowChipEditing = false,
     this.focusNode,
+    this.hintText = '',
+    this.hintStyle,
   })  : assert(maxChips == null || initialValue.length <= maxChips),
         super(key: key);
 
@@ -76,6 +78,8 @@ class ChipsInput<T> extends StatefulWidget {
   final bool autofocus;
   final bool allowChipEditing;
   final FocusNode focusNode;
+  final String hintText; //may be conflict with labelText, hintText of InputDecoration
+  final TextStyle hintStyle;
 
   // final Color cursorColor;
 
@@ -92,6 +96,7 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
   final _suggestionsStreamController = StreamController<List<T>>.broadcast();
   int _searchId = 0;
   TextEditingValue _value = TextEditingValue();
+
   // TextEditingValue _receivedRemoteTextEditingValue;
   TextInputConnection _textInputConnection;
   SuggestionsBoxController _suggestionsBoxController;
@@ -424,6 +429,21 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
             Flexible(
               flex: 0,
               child: TextCursor(resumed: _focusNode.hasFocus),
+            ),
+            Flexible(
+              flex: 0,
+              child: Visibility(
+                child: Text(
+                  widget.hintText,
+                  maxLines: 1,
+                  overflow: widget.textOverflow,
+                  style: widget.hintStyle ??
+                      theme.textTheme.subtitle1
+                          .copyWith(height: 1.5, color: Colors.grey[500]),
+                ),
+                visible: _value.normalCharactersText.isEmpty &&
+                    widget.hintText.isNotEmpty,
+              ),
             ),
           ],
         ),
