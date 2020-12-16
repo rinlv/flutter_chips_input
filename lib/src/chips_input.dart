@@ -52,7 +52,7 @@ class ChipsInput<T> extends StatefulWidget {
     this.allowChipEditing = false,
     this.focusNode,
     this.hintText = '',
-    this.hintStyle,
+    this.hintStyle, this.borderRadiusSuggest,
   })  : assert(maxChips == null || initialValue.length <= maxChips),
         super(key: key);
 
@@ -80,6 +80,7 @@ class ChipsInput<T> extends StatefulWidget {
   final FocusNode focusNode;
   final String hintText; //may be conflict with labelText, hintText of InputDecoration
   final TextStyle hintStyle;
+  final double borderRadiusSuggest;
 
   // final Color cursorColor;
 
@@ -201,6 +202,7 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
           builder: (context, snapshot) {
             if (snapshot.hasData && snapshot.data.isNotEmpty) {
               var suggestionsListView = Material(
+                borderRadius: BorderRadius.circular(widget.borderRadiusSuggest ?? 8),
                 elevation: 4.0,
                 child: ConstrainedBox(
                   constraints: BoxConstraints(
