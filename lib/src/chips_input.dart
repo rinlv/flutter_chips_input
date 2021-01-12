@@ -9,8 +9,7 @@ import 'text_cursor.dart';
 
 typedef ChipsInputSuggestions<T> = FutureOr<List<T>> Function(String query);
 typedef ChipSelected<T> = void Function(T data, bool selected);
-typedef ChipsBuilder<T> = Widget Function(
-    BuildContext context, ChipsInputState<T> state, T data);
+typedef ChipsBuilder<T> = Widget Function(BuildContext context, ChipsInputState<T> state, T data);
 
 const kObjectReplacementChar = 0xFFFD;
 
@@ -19,9 +18,8 @@ extension on TextEditingValue {
         text.codeUnits.where((ch) => ch != kObjectReplacementChar),
       );
 
-  List<int> get replacementCharacters => text.codeUnits
-      .where((ch) => ch == kObjectReplacementChar)
-      .toList(growable: false);
+  List<int> get replacementCharacters =>
+      text.codeUnits.where((ch) => ch == kObjectReplacementChar).toList(growable: false);
 
   int get replacementCharactersCount => replacementCharacters.length;
 }
@@ -39,7 +37,7 @@ class ChipsInput<T> extends StatefulWidget {
     this.onChipTapped,
     this.maxChips,
     this.textStyle,
-    this.suggestionsBoxMaxHeight,
+    this.suggestionsBoxMaxHeight = 240,
     this.inputType = TextInputType.text,
     this.textOverflow = TextOverflow.clip,
     this.obscureText = false,
@@ -52,7 +50,8 @@ class ChipsInput<T> extends StatefulWidget {
     this.allowChipEditing = false,
     this.focusNode,
     this.hintText = '',
-    this.hintStyle, this.borderRadiusSuggest,
+    this.hintStyle,
+    this.borderRadiusSuggest,
   })  : assert(maxChips == null || initialValue.length <= maxChips),
         super(key: key);
 
@@ -90,8 +89,7 @@ class ChipsInput<T> extends StatefulWidget {
   ChipsInputState<T> createState() => ChipsInputState<T>();
 }
 
-class ChipsInputState<T> extends State<ChipsInput<T>>
-    implements TextInputClient {
+class ChipsInputState<T> extends State<ChipsInput<T>> implements TextInputClient {
   Set<T> _chips = <T>{};
   List<T> _suggestions;
   final _suggestionsStreamController = StreamController<List<T>>.broadcast();
@@ -114,11 +112,9 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
         textCapitalization: widget.textCapitalization,
       );
 
-  bool get _hasInputConnection =>
-      _textInputConnection != null && _textInputConnection.attached;
+  bool get _hasInputConnection => _textInputConnection != null && _textInputConnection.attached;
 
-  bool get _hasReachedMaxChips =>
-      widget.maxChips != null && _chips.length >= widget.maxChips;
+  bool get _hasReachedMaxChips => widget.maxChips != null && _chips.length >= widget.maxChips;
 
   // FocusAttachment _focusAttachment;
   FocusNode _focusNode;
@@ -186,16 +182,13 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
         final renderBoxOffset = renderBox.localToGlobal(Offset.zero);
         final topAvailableSpace = renderBoxOffset.dy;
         final mq = MediaQuery.of(context);
-        final bottomAvailableSpace = mq.size.height -
-            mq.viewInsets.bottom -
-            renderBoxOffset.dy -
-            size.height;
-        final _suggestionBoxHeight =
-            max(topAvailableSpace, bottomAvailableSpace);
+        final bottomAvailableSpace =
+            mq.size.height - mq.viewInsets.bottom - renderBoxOffset.dy - size.height;
         final showTop = topAvailableSpace > bottomAvailableSpace;
-        // print("showTop: $showTop" );
-        final compositedTransformFollowerOffset =
-            showTop ? Offset(0, -size.height) : Offset.zero;
+        final _suggestionBoxHeight = showTop
+            ? min(topAvailableSpace, widget.suggestionsBoxMaxHeight)
+            : min(bottomAvailableSpace, widget.suggestionsBoxMaxHeight);
+        final compositedTransformFollowerOffset = showTop ? Offset(0, -size.height) : Offset.zero;
 
         return StreamBuilder<List<T>>(
           stream: _suggestionsStreamController.stream,
@@ -290,8 +283,7 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
     final localId = ++_searchId;
     final results = await widget.findSuggestions(value);
     if (_searchId == localId && mounted) {
-      _suggestions =
-          results.where((r) => !_chips.contains(r)).toList(growable: false);
+      _suggestions = results.where((r) => !_chips.contains(r)).toList(growable: false);
     }
     _suggestionsStreamController.add(_suggestions);
   }
@@ -313,8 +305,7 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
       setState(() {
         _value = value;
       });
-      if (value.replacementCharactersCount <
-          _oldTextEditingValue.replacementCharactersCount) {
+      if (value.replacementCharactersCount < _oldTextEditingValue.replacementCharactersCount) {
         var removedChip = _chips.last;
         _chips = Set.of(_chips.take(value.replacementCharactersCount));
         widget.onChanged(_chips.toList(growable: false));
@@ -332,10 +323,9 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
   }
 
   void _updateTextInputState({replaceText = false, putText = ''}) {
-    final updatedText =
-        String.fromCharCodes(_chips.map((_) => kObjectReplacementChar)) +
-            "${replaceText ? '' : _value.normalCharactersText}" +
-            putText;
+    final updatedText = String.fromCharCodes(_chips.map((_) => kObjectReplacementChar)) +
+        "${replaceText ? '' : _value.normalCharactersText}" +
+        putText;
     setState(() {
       _value = _value.copyWith(
         text: updatedText,
@@ -351,6 +341,7 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
 
   @override
   void performAction(TextInputAction action) {
+    _value = _value.copyWith(text: _value.text.trim());
     _focusNode.unfocus();
   }
 
@@ -391,9 +382,8 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
 
   @override
   Widget build(BuildContext context) {
-    var chipsChildren = _chips
-        .map<Widget>((data) => widget.chipBuilder(context, this, data))
-        .toList();
+    var chipsChildren =
+        _chips.map<Widget>((data) => widget.chipBuilder(context, this, data)).toList();
 
     final theme = Theme.of(context);
 
@@ -426,11 +416,9 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
                   maxLines: 1,
                   overflow: widget.textOverflow,
                   style: widget.hintStyle ??
-                      theme.textTheme.subtitle1
-                          .copyWith(height: 1.5, color: Colors.grey[500]),
+                      theme.textTheme.subtitle1.copyWith(height: 1.5, color: Colors.grey[500]),
                 ),
-                visible: _value.normalCharactersText.isEmpty &&
-                    widget.hintText.isNotEmpty,
+                visible: _value.normalCharactersText.isEmpty && widget.hintText.isNotEmpty,
               ),
             ),
           ],
