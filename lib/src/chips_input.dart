@@ -351,21 +351,7 @@ class ChipsInputState<T> extends State<ChipsInput<T>>
 
   @override
   void performAction(TextInputAction action) {
-    switch (action) {
-      case TextInputAction.done:
-      case TextInputAction.go:
-      case TextInputAction.send:
-      case TextInputAction.search:
-        if (_suggestions != null && _suggestions.isNotEmpty) {
-          selectSuggestion(_suggestions.first);
-        } else {
-          _focusNode.unfocus();
-        }
-        break;
-      default:
-        _focusNode.unfocus();
-        break;
-    }
+    _focusNode.unfocus();
   }
 
   @override
