@@ -342,7 +342,25 @@ class ChipsInputState<T> extends State<ChipsInput<T>> implements TextInputClient
   @override
   void performAction(TextInputAction action) {
     _value = _value.copyWith(text: _value.text.trim());
-    _focusNode.unfocus();
+    if (_value.normalCharactersText.isEmpty) {
+      _focusNode.unfocus();
+      return;
+    }
+    switch (action) {
+      case TextInputAction.done:
+      case TextInputAction.go:
+      case TextInputAction.send:
+      case TextInputAction.search:
+        if (_suggestions != null && _suggestions.isNotEmpty) {
+          selectSuggestion(_suggestions.first);
+        } else {
+          _focusNode.unfocus();
+        }
+        break;
+      default:
+        _focusNode.unfocus();
+        break;
+    }
   }
 
   @override
